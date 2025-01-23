@@ -12,13 +12,19 @@ def search(conn):
     @commands.command()
     async def search(ctx):
         await ctx.message.delete()
+        
         async def update_user_status(interaction, status):
+            # Обновляем значение show_in_search в базе данных
             cursor.execute(
                 "INSERT OR REPLACE INTO users (user_id, username, role_id, show_in_search) VALUES (?, ?, ?, ?)", 
                 (interaction.user.id, interaction.user.name, None, status)
             )
             conn.commit()
-            await interaction.response.edit_message(view=create_search_view(not status))
+
+            # Меняем текст кнопки в зависимости от статуса
+            new_view = create_search_view(status)
+            await interaction.response.edit_message(view=new_view)
+
 
         async def create_search_view_after_role(interaction, role_name, selected_role_id):
             # Создаем ветку (тред) для выбранной роли
@@ -38,7 +44,7 @@ def search(conn):
                     # Создаем embed для каждого пользователя
                     embed = discord.Embed(
                         title=f"Користувач шукає команду",
-                        description=f"**@{teammate[0]}** шукає команду для ролі **{role_name}**.",
+                        description=f"**<@{interaction.user.id}>** шукає команду для ролі **<@&{selected_role_id}>**.",
                         color=discord.Color.green()
                     )
 
@@ -73,7 +79,6 @@ def search(conn):
             await interaction.response.edit_message(embed=embed, view=create_search_view(True))
 
 
-
         async def select_role_callback(interaction):
             selected_role_id = int(interaction.data["values"][0])
             role_name = cursor.execute("SELECT role_name FROM roles WHERE role_id = ?", (selected_role_id,)).fetchone()[0]
@@ -92,18 +97,21 @@ def search(conn):
         def create_search_view(show_in_search):
             view = View()
             
+            # Кнопка для поиска
             search_button = Button(label="Пошук", style=discord.ButtonStyle.blurple)
             search_button.callback = lambda i: display_role_select(i)
             view.add_item(search_button)
 
+            # Кнопка переключения видимости
             toggle_button = Button(
-                label="Відображати мене під час пошуку" if not show_in_search else "Не відображати мене під час пошуку",
-                style=discord.ButtonStyle.green if not show_in_search else discord.ButtonStyle.red
+                label="Не відображати мене під час пошуку" if show_in_search else "Відображати мене під час пошуку",
+                style=discord.ButtonStyle.red if show_in_search else discord.ButtonStyle.green
             )
             toggle_button.callback = lambda i: update_user_status(i, not show_in_search)
             view.add_item(toggle_button)
 
             return view
+
 
         async def display_role_select(interaction):
             roles = cursor.execute("SELECT * FROM roles").fetchall()
