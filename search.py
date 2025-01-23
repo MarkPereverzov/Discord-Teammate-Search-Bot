@@ -20,9 +20,10 @@ def search(conn):
             username = interaction.user.name
 
             # Получаем информацию о текущей роли и сообщении пользователя
-            user_data = cursor.execute("SELECT role_id, message_id FROM users WHERE user_id = ?", (user_id,)).fetchone()
+            user_data = cursor.execute("SELECT role_id, message_id, show_in_search FROM users WHERE user_id = ?", (user_id,)).fetchone()
             role_id = user_data[0] if user_data else None
             message_id = user_data[1] if user_data else None
+            current_status = user_data[2] if user_data else None
 
             # Обновляем статус пользователя в базе данных
             cursor.execute(
@@ -110,8 +111,6 @@ def search(conn):
             )
             await interaction.response.edit_message(embed=embed, view=create_search_view(True))
 
-
-
         async def select_role_callback(interaction):
             selected_role_id = int(interaction.data["values"][0])
             role_name = cursor.execute("SELECT role_name FROM roles WHERE role_id = ?", (selected_role_id,)).fetchone()[0]
@@ -123,6 +122,7 @@ def search(conn):
             search_button.callback = lambda i: display_role_select(i)
             view.add_item(search_button)
 
+            # Используем статус show_in_search для правильного отображения кнопки
             toggle_button = Button(
                 label="Не відображати мене під час пошуку" if show_in_search else "Відображати мене під час пошуку",
                 style=discord.ButtonStyle.red if show_in_search else discord.ButtonStyle.green
@@ -154,11 +154,15 @@ def search(conn):
             )
             await interaction.response.edit_message(embed=embed, view=View().add_item(select_menu))
 
+        # Получаем статус пользователя для отображения правильной кнопки
+        user_data = cursor.execute("SELECT show_in_search FROM users WHERE user_id = ?", (ctx.author.id,)).fetchone()
+        show_in_search = user_data[0] if user_data else False
+
         embed = discord.Embed(
             title="Пошук команди",
             description="Будь ласка, натисніть кнопку пошук і виберіть параметри.",
             color=discord.Color.light_grey()
         )
-        await ctx.send(embed=embed, view=create_search_view(False))
+        await ctx.send(embed=embed, view=create_search_view(show_in_search))
 
     return search
