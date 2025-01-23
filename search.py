@@ -71,7 +71,7 @@ def search(conn):
             else:
                 # Создаём новую ветку, если её ещё нет
                 thread = await interaction.channel.create_thread(
-                    name=f"{role_name} - поиск",
+                    name=f"{role_name}",
                     type=discord.ChannelType.public_thread
                 )
                 # Сохраняем информацию о ветке в таблицу branches
@@ -106,7 +106,7 @@ def search(conn):
             # Отправляем ответ с результатами поиска
             embed = discord.Embed(
                 title=f"Результат пошуку **{role_name}**",
-                description=f"{interaction.user.mention} **результати** вашого пошуку знаходяться у гілці ниже.",
+                description=f"{ctx.author.mention} **результати** вашого пошуку знаходяться у гілці нижче.\n Якщо результату немає, спробуйте **змінити** запит.\n **Люди нижче** раніше включили показ себе в пошуку, значить шукали партнера, і можливо ще шукають.",
                 color=discord.Color.green()
             )
             await interaction.response.edit_message(embed=embed, view=create_search_view(True))
