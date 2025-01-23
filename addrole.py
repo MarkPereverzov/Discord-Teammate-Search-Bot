@@ -16,7 +16,7 @@ def addrole():
             if role_in_db:
                 embed = discord.Embed(
                     title="Додавання ролі",
-                    description=f"Роль {role.mention} вже існує в базі даних.",
+                    description=f"Роль {role.mention} вже існує.",
                     color=discord.Color.light_grey()
                 )
             else:
@@ -25,7 +25,7 @@ def addrole():
                 conn.commit()
                 embed = discord.Embed(
                     title="Додавання ролі",
-                    description=f"Роль {role.mention} успішно додана до бази даних!",
+                    description=f"Роль {role.mention} успішно додана.",
                     color=discord.Color.light_grey()
                 )
         else:
